@@ -5,8 +5,6 @@ const mochaTemplates = require('./templates/mocha');
 const jestTemplates = require('./templates/jest');
 const log = require('../src/utils/logger').child({ __filename });
 
-const PREFIX = 'detox-init';
-
 module.exports.command = 'init';
 module.exports.desc = 'Scaffold initial E2E test folder structure for a specified test runner';
 module.exports.builder = {
@@ -24,11 +22,16 @@ module.exports.handler = async function init(argv) {
   switch (runner) {
     case 'mocha':
       createMochaFolderE2E();
-      patchDetoxConfigInPackageJSON('mocha');
+      patchDetoxConfigInPackageJSON({
+        runner: 'mocha'
+      });
       break;
     case 'jest':
       createJestFolderE2E();
-      patchDetoxConfigInPackageJSON('jest', 'e2e/config.json');
+      patchDetoxConfigInPackageJSON({
+        runner: 'jest',
+        runnerConfigFile: 'e2e/config.json'
+      });
       break;
     default:
       throw new Error([
@@ -51,17 +54,17 @@ function createFolder(dir, files) {
       createFile(path.join(dir, filename), content);
     }
   } else {
-    log.error(PREFIX, `./e2e folder already exists at path: ${path.resolve(dir)}`);
+    log.error(`Failed to create e2e folder, because it already exists at path: ${path.resolve(dir)}`);
   }
 }
 
 function createFile(filename, content) {
   try {
     fs.writeFileSync(filename, content);
-    log.info(PREFIX, `A file was created in: ${filename}`);
+    log.info(`A file was created at: ${filename}`);
   } catch (e) {
-    log.error(PREFIX, `Failed to create file in: ${filename}`);
-    log.error(PREFIX, e);
+    log.error(`Failed to create a file at path: ${filename}`);
+    log.error(e);
   }
 }
 
@@ -85,19 +88,22 @@ function parsePackageJson(filepath) {
   try {
     return require(filepath);
   } catch (err) {
-    log.error(PREFIX, `Failed to parse ./package.json due to the error:\n${err.message}`);
+    log.error(`Failed to parse package.json due to an error:\n${err.message}`);
   }
 }
 
-function patchPackageJson(packageJson, runnerName, runnerConfigFile) {
-  log.info(PREFIX, 'Patched ./package.json with these changes:');
+function loggedSet(obj, path, value) {
+  _.set(obj, path, value);
 
-  _.set(packageJson, ['detox', 'test-runner'], runnerName);
-  log.info(PREFIX, `  set detox->test-runner to "${runnerName}"`);
+  const pathString = path.map(segment => `[${JSON.stringify(segment)}]`).join('');
+  log.info(`  json${pathString} = ${JSON.stringify(value)};`);
+}
+
+function patchPackageJson(packageJson, runnerName, runnerConfigFile) {
+  loggedSet(packageJson, ['detox', 'test-runner'], runnerName);
 
   if (runnerConfigFile) {
-    _.set(packageJson, ['detox', 'runner-config'], runnerConfigFile);
-    log.info(PREFIX, `  set detox->runner-config to "${runnerConfigFile}"`);
+    loggedSet(packageJson, ['detox', 'runner-config'], runnerConfigFile);
   }
 }
 
@@ -105,16 +111,19 @@ function savePackageJson(filepath, json) {
   try {
     fs.writeFileSync(filepath, JSON.stringify(json, null, 2) + '\n');
   } catch (err) {
-    log.error(PREFIX, `Failed to write changes into ./package.json due to the error:\n${err.message}`);
+    log.error(`Failed to write changes back into ./package.json due to an error:\n${err.message}`);
   }
 }
 
-function patchDetoxConfigInPackageJSON(runnerName, runnerConfigFile) {
+function patchDetoxConfigInPackageJSON({ runner, runnerConfigFile }) {
   const packageJsonPath = path.join(process.cwd(), 'package.json');
-  const packageJson = parsePackageJson(packageJsonPath);
 
-  if (packageJson) {
-    patchPackageJson(packageJson, runnerName, runnerConfigFile);
+  if (fs.existsSync(packageJsonPath)) {
+    log.info(`Patching package.json at path: ${packageJsonPath}`);
+    const packageJson = parsePackageJson(packageJsonPath);
+    patchPackageJson(packageJson, runner, runnerConfigFile);
     savePackageJson(packageJsonPath, packageJson);
+  } else {
+    log.error(`Failed to find package.json at path: ${packageJsonPath}`);
   }
 }
