@@ -4,7 +4,8 @@ const runnerConfig = `{
     "testEnvironment": "node",
     "reporters": ["<rootDir>/../node_modules/detox/runners/jest/DetoxJestReporter.js"],
     "verbose": true
-}`;
+}
+`;
 
 const initjsContent = `const config = require('../package.json').detox;
 const adapter = require('detox/runners/jest/adapter');
