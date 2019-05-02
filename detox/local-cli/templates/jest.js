@@ -2,7 +2,7 @@ const firstTestContent = require('./firstTestContent');
 const runnerConfig = `{
     "setupFilesAfterEnv": ["./init.js"],
     "testEnvironment": "node",
-    "reporters": ["<rootDir>/../node_modules/detox/runners/jest/DetoxJestReporter.js"],
+    "reporters": ["detox/runners/jest/DetoxJestReporter.js"],
     "verbose": true
 }
 `;
