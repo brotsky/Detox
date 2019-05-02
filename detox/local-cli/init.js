@@ -23,7 +23,8 @@ module.exports.handler = async function init(argv) {
     case 'mocha':
       createMochaFolderE2E();
       patchDetoxConfigInPackageJSON({
-        runner: 'mocha'
+        runner: 'mocha',
+        runnerConfigFile: 'e2e/mocha.opts',
       });
       break;
     case 'jest':
@@ -99,14 +100,6 @@ function loggedSet(obj, path, value) {
   log.info(`  json${pathString} = ${JSON.stringify(value)};`);
 }
 
-function patchPackageJson(packageJson, runnerName, runnerConfigFile) {
-  loggedSet(packageJson, ['detox', 'test-runner'], runnerName);
-
-  if (runnerConfigFile) {
-    loggedSet(packageJson, ['detox', 'runner-config'], runnerConfigFile);
-  }
-}
-
 function savePackageJson(filepath, json) {
   try {
     fs.writeFileSync(filepath, JSON.stringify(json, null, 2) + '\n');
@@ -120,8 +113,11 @@ function patchDetoxConfigInPackageJSON({ runner, runnerConfigFile }) {
 
   if (fs.existsSync(packageJsonPath)) {
     log.info(`Patching package.json at path: ${packageJsonPath}`);
+
     const packageJson = parsePackageJson(packageJsonPath);
-    patchPackageJson(packageJson, runner, runnerConfigFile);
+    loggedSet(packageJson, ['detox', 'test-runner'], runner);
+    loggedSet(packageJson, ['detox', 'runner-config'], runnerConfigFile);
+
     savePackageJson(packageJsonPath, packageJson);
   } else {
     log.error(`Failed to find package.json at path: ${packageJsonPath}`);
