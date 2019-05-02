@@ -9,7 +9,7 @@ class DetoxJestReporter extends VerboseReporter {
   }
 
   /**
-   * The super's impl does the following:
+   * The VerboseReporter implementation does the following:
    * - For the <b>stderr</b> stream, it overrides the 'write' method with a simple bulked output mechanism,
    *   which aggregates output onto a buffer but flushes it immediately.
    * - For the <b>stdout</b> stream, it overrides the 'write' method with a time-based bulked output mechanism,
