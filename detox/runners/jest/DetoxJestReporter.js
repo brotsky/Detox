@@ -31,11 +31,10 @@ class DetoxJestReporter extends VerboseReporter {
    */
   _wrapStdio(stream) {
     const originalWrite = stream.write;
-    let buffer = [];
+    const buffer = [];
 
     const flushBufferedOutput = () => {
-      const string = buffer.join('');
-      buffer = []; // This is to avoid conflicts between random output and status text
+      const string = buffer.splice(0).join(''); // This is to avoid conflicts between random output and status text
 
       this._clearStatus();
 
@@ -71,7 +70,7 @@ class DetoxJestReporter extends VerboseReporter {
       // This class overrides jest's VerboseReporter, which is set by default. Can't have both.
       throw new DetoxRuntimeError({
         message: 'Cannot work alongside the default Jest reporter. Please remove it from the reporters list.',
-        hint: 'see https://jestjs.io/docs/en/configuration#reporters-array-modulename-modulename-options for more details',
+        hint: 'See https://jestjs.io/docs/en/configuration#reporters-array-modulename-modulename-options for more details',
       });
     }
   }
